@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Helix Research Interview</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #f0f4f8;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: #1A478A;
+      color: white;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      flex-shrink: 0;
+    }
+    header .logo { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; }
+    header .logo span { color: #7eb8ff; }
+    .header-right { display: flex; align-items: center; gap: 16px; }
+    header .step-label { font-size: 12px; color: rgba(255,255,255,0.6); font-weight: 500; }
+    #history-btn {
+      background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25);
+      color: white; border-radius: 6px; padding: 5px 12px; font-size: 12px;
+      font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.2s;
+      display: none;
+    }
+    #history-btn:hover { background: rgba(255,255,255,0.2); }
+    #admin-btn {
+      background: none; border: none; color: rgba(255,255,255,0.25); font-size: 15px;
+      cursor: pointer; padding: 4px 6px; line-height: 1; transition: color 0.2s;
+      font-family: inherit;
+    }
+    #admin-btn:hover { color: rgba(255,255,255,0.6); }
+
+    /* Done screen — simplified */
+    .done-instructions {
+      background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px;
+      padding: 24px 26px; margin-bottom: 20px;
+    }
+    .done-instructions h3 { font-size: 14px; font-weight: 700; color: #334155; margin-bottom: 14px; }
+    .done-step { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+    .done-step:last-child { margin-bottom: 0; }
+    .done-step-num { background: #1A478A; color: white; font-size: 11px; font-weight: 800; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+    .done-step-text { font-size: 13.5px; color: #475569; line-height: 1.55; }
+    .done-step-text strong { color: #1e293b; }
+    .done-contact { display: flex; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
+    .contact-chip { display: inline-flex; align-items: center; gap: 6px; background: white; border: 1.5px solid #e2e8f0; border-radius: 20px; padding: 5px 12px; font-size: 12.5px; color: #334155; font-weight: 500; cursor: pointer; text-decoration: none; transition: all 0.2s; }
+    .contact-chip:hover { border-color: #1A478A; color: #1A478A; }
+
+    #progress-bar-wrap { background: #d1dce8; height: 4px; flex-shrink: 0; }
+    #progress-bar { height: 4px; background: #3B82F6; transition: width 0.4s ease; width: 0%; }
+
+    /* Autosave toast */
+    #save-toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: #1e293b; color: white; padding: 9px 18px; border-radius: 8px;
+      font-size: 13px; font-weight: 500; pointer-events: none;
+      opacity: 0; transition: opacity 0.3s; z-index: 999;
+      display: flex; align-items: center; gap: 7px;
+    }
+    #save-toast.show { opacity: 1; }
+
+    main { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 40px 20px; }
+
+    .card {
+      background: white; border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      padding: 40px 44px; width: 100%; max-width: 740px;
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Welcome ── */
+    .welcome-icon { font-size: 48px; margin-bottom: 16px; }
+    .welcome-title { font-size: 26px; font-weight: 800; color: #1A478A; margin-bottom: 10px; }
+    .welcome-subtitle { font-size: 15px; color: #64748b; line-height: 1.65; margin-bottom: 28px; }
+    .instruction-box {
+      background: #f0f6ff; border-left: 4px solid #3B82F6;
+      border-radius: 0 8px 8px 0; padding: 16px 20px; margin-bottom: 24px;
+    }
+    .instruction-box h3 { font-size: 13px; font-weight: 700; color: #1A478A; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; }
+    .instruction-box ul { padding-left: 18px; color: #475569; font-size: 13.5px; line-height: 1.7; }
+
+    /* Resume banner */
+    #resume-banner {
+      background: #fffbeb; border: 1.5px solid #fcd34d; border-radius: 10px;
+      padding: 14px 18px; margin-bottom: 16px; display: none;
+    }
+    .resume-banner-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .resume-banner-header span { font-size: 13.5px; font-weight: 700; color: #92400e; }
+    .resume-meta { font-size: 12.5px; color: #78350f; margin-bottom: 12px; line-height: 1.5; }
+    .resume-actions { display: flex; gap: 8px; }
+    .resume-btn { padding: 7px 14px; border-radius: 6px; font-size: 12.5px; font-weight: 700; cursor: pointer; font-family: inherit; border: none; transition: all 0.2s; }
+    .resume-btn-primary { background: #f59e0b; color: white; }
+    .resume-btn-primary:hover { background: #d97706; }
+    .resume-btn-secondary { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+    .resume-btn-secondary:hover { background: #fde68a; }
+
+    /* ── Forms ── */
+    .form-title { font-size: 20px; font-weight: 800; color: #1A478A; margin-bottom: 6px; }
+    .form-subtitle { font-size: 13.5px; color: #64748b; margin-bottom: 28px; }
+    .form-row { margin-bottom: 20px; }
+    .form-row label { display: block; font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-row input {
+      width: 100%; padding: 11px 14px; border: 1.5px solid #cbd5e1;
+      border-radius: 8px; font-size: 14px; color: #1e293b; font-family: inherit;
+      transition: border-color 0.2s; background: #fafafa;
+    }
+    .form-row input:focus { outline: none; border-color: #3B82F6; background: white; }
+    .form-row select {
+      width: 100%; padding: 11px 14px; border: 1.5px solid #cbd5e1;
+      border-radius: 8px; font-size: 14px; color: #1e293b; font-family: inherit;
+      transition: border-color 0.2s; background: #fafafa; cursor: pointer;
+      appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 14px center;
+    }
+    .form-row select:focus { outline: none; border-color: #3B82F6; background-color: white; }
+    .form-row .hint { font-size: 11.5px; color: #94a3b8; margin-top: 5px; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    /* ── Customize ── */
+    .customize-title { font-size: 20px; font-weight: 800; color: #1A478A; margin-bottom: 6px; }
+    .customize-subtitle { font-size: 13.5px; color: #64748b; margin-bottom: 24px; line-height: 1.6; }
+    .q-edit-card {
+      border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 18px 20px;
+      margin-bottom: 12px; transition: border-color 0.2s; background: #fafcff;
+    }
+    .q-edit-card:hover { border-color: #bfdbfe; }
+    .q-edit-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .q-edit-num { background: #1A478A; color: white; font-size: 11px; font-weight: 800; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .q-edit-actions { margin-left: auto; display: flex; gap: 6px; }
+    .q-edit-btn { width: 28px; height: 28px; border-radius: 6px; border: 1.5px solid #e2e8f0; background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #64748b; transition: all 0.15s; }
+    .q-edit-btn:hover { border-color: #94a3b8; }
+    .q-edit-btn.danger:hover { border-color: #fca5a5; background: #fff5f5; color: #ef4444; }
+    .q-edit-btn:disabled { opacity: 0.3; cursor: default; }
+    .q-edit-field { margin-bottom: 10px; }
+    .q-edit-field label { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 5px; }
+    .q-edit-field input { width: 100%; padding: 9px 12px; border: 1.5px solid #e2e8f0; border-radius: 7px; font-size: 13.5px; font-family: inherit; color: #1e293b; background: white; transition: border-color 0.2s; }
+    .q-edit-field input:focus { outline: none; border-color: #3B82F6; }
+    .q-edit-field textarea { width: 100%; padding: 9px 12px; border: 1.5px solid #e2e8f0; border-radius: 7px; font-size: 13px; font-family: inherit; color: #475569; background: white; transition: border-color 0.2s; resize: vertical; min-height: 70px; line-height: 1.6; }
+    .q-edit-field textarea:focus { outline: none; border-color: #3B82F6; }
+    .add-q-btn { width: 100%; padding: 12px; border: 2px dashed #cbd5e1; border-radius: 10px; background: none; cursor: pointer; font-family: inherit; font-size: 13.5px; color: #64748b; font-weight: 600; transition: all 0.2s; margin-bottom: 24px; }
+    .add-q-btn:hover { border-color: #3B82F6; color: #3B82F6; background: #f0f6ff; }
+    .reset-link { font-size: 12px; color: #94a3b8; cursor: pointer; text-decoration: underline; }
+    .reset-link:hover { color: #64748b; }
+
+    /* ── Question screen ── */
+    .q-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+    .q-badge { background: #1A478A; color: white; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.6px; white-space: nowrap; }
+    .q-dots { display: flex; gap: 5px; flex-wrap: wrap; }
+    .q-dot { width: 8px; height: 8px; border-radius: 50%; background: #e2e8f0; transition: background 0.3s; }
+    .q-dot.done { background: #3B82F6; }
+    .q-dot.active { background: #1A478A; }
+    .q-title { font-size: 20px; font-weight: 800; color: #1e293b; line-height: 1.35; margin-bottom: 8px; }
+    .q-prompt { font-size: 13.5px; color: #64748b; line-height: 1.65; margin-bottom: 22px; padding-bottom: 20px; border-bottom: 1px solid #f1f5f9; }
+    textarea.response-area { width: 100%; min-height: 200px; padding: 14px 16px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 14px; font-family: inherit; color: #1e293b; line-height: 1.7; resize: vertical; transition: border-color 0.2s, box-shadow 0.2s; background: #fafafa; }
+    textarea.response-area:focus { outline: none; border-color: #3B82F6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); background: white; }
+    textarea.response-area::placeholder { color: #94a3b8; }
+    .textarea-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+    .word-count { font-size: 11.5px; color: #94a3b8; }
+    .format-hint { font-size: 11.5px; color: #94a3b8; }
+
+    /* ── Summary ── */
+    .summary-title { font-size: 22px; font-weight: 800; color: #1A478A; margin-bottom: 6px; }
+    .summary-subtitle { font-size: 13.5px; color: #64748b; margin-bottom: 28px; }
+    .summary-item { border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 18px 20px; margin-bottom: 14px; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; }
+    .summary-item:hover { border-color: #3B82F6; box-shadow: 0 2px 8px rgba(59,130,246,0.1); }
+    .summary-q-label { font-size: 11px; font-weight: 700; color: #3B82F6; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px; }
+    .summary-q-title { font-size: 14px; font-weight: 700; color: #1e293b; margin-bottom: 6px; line-height: 1.3; }
+    .summary-q-answer { font-size: 13px; color: #475569; line-height: 1.6; white-space: pre-wrap; max-height: 80px; overflow: hidden; mask-image: linear-gradient(to bottom, black 60%, transparent 100%); }
+    .edit-hint { font-size: 11px; color: #3B82F6; margin-top: 8px; opacity: 0; transition: opacity 0.2s; }
+    .summary-item:hover .edit-hint { opacity: 1; }
+    .no-answer { color: #f59e0b; font-style: italic; font-size: 13px; }
+
+    /* ── History screen ── */
+    .history-title { font-size: 22px; font-weight: 800; color: #1A478A; margin-bottom: 6px; }
+    .history-subtitle { font-size: 13.5px; color: #64748b; margin-bottom: 24px; }
+    .history-empty { text-align: center; padding: 40px 0; color: #94a3b8; font-size: 14px; }
+    .history-card {
+      border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 16px 20px;
+      margin-bottom: 12px; transition: border-color 0.2s;
+    }
+    .history-card:hover { border-color: #bfdbfe; }
+    .history-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+    .history-card-title { font-size: 14px; font-weight: 700; color: #1e293b; }
+    .history-card-date { font-size: 11.5px; color: #94a3b8; }
+    .history-card-meta { font-size: 12.5px; color: #64748b; margin-bottom: 10px; }
+    .history-card-actions { display: flex; gap: 8px; }
+    .history-action-btn { padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; border: none; transition: all 0.2s; }
+    .history-action-btn.blue { background: #1A478A; color: white; }
+    .history-action-btn.blue:hover { background: #153a72; }
+    .history-action-btn.gray { background: #f1f5f9; color: #475569; }
+    .history-action-btn.gray:hover { background: #e2e8f0; }
+    .history-action-btn.red { background: #fff5f5; color: #ef4444; border: 1px solid #fca5a5; }
+    .history-action-btn.red:hover { background: #fee2e2; }
+
+    /* ── Done ── */
+    .done-icon { font-size: 52px; margin-bottom: 16px; }
+    .done-title { font-size: 24px; font-weight: 800; color: #1A478A; margin-bottom: 8px; }
+    .done-subtitle { font-size: 14px; color: #64748b; line-height: 1.65; margin-bottom: 28px; }
+    .action-card { border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 20px 22px; margin-bottom: 14px; display: flex; align-items: center; gap: 16px; }
+    .action-icon { font-size: 28px; flex-shrink: 0; }
+    .action-info h4 { font-size: 14px; font-weight: 700; color: #1e293b; margin-bottom: 3px; }
+    .action-info p { font-size: 12.5px; color: #64748b; line-height: 1.5; }
+    .action-btn { margin-left: auto; padding: 9px 18px; border-radius: 7px; font-size: 13px; font-weight: 700; cursor: pointer; border: none; font-family: inherit; white-space: nowrap; transition: all 0.2s; }
+    .action-btn-blue { background: #1A478A; color: white; }
+    .action-btn-blue:hover { background: #153a72; }
+    .action-btn-gray { background: #f1f5f9; color: #475569; }
+    .action-btn-gray:hover { background: #e2e8f0; }
+
+    /* ── Buttons ── */
+    .btn-row { display: flex; gap: 12px; margin-top: 28px; align-items: center; }
+    .btn { padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; border: none; font-family: inherit; transition: all 0.2s; display: inline-flex; align-items: center; gap: 7px; }
+    .btn-primary { background: #1A478A; color: white; flex: 1; justify-content: center; }
+    .btn-primary:hover { background: #153a72; transform: translateY(-1px); }
+    .btn-secondary { background: #f1f5f9; color: #475569; }
+    .btn-secondary:hover { background: #e2e8f0; }
+    .btn-outline { background: white; color: #1A478A; border: 1.5px solid #1A478A; flex: 1; justify-content: center; }
+    .btn-outline:hover { background: #f0f6ff; }
+    .btn-green { background: #059669; color: white; flex: 1; justify-content: center; }
+    .btn-green:hover { background: #047857; transform: translateY(-1px); }
+    .btn-skip { background: none; border: none; color: #94a3b8; font-size: 13px; cursor: pointer; font-family: inherit; padding: 8px 4px; margin-left: auto; transition: color 0.2s; }
+    .btn-skip:hover { color: #64748b; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Helix <span>Research</span> Interview</div>
+  <div class="header-right">
+    <div class="step-label" id="header-step"></div>
+    <button id="history-btn" onclick="openHistory()">📋 History</button>
+    <button id="admin-btn" onclick="openAdminCustomize()" title="Admin">⚙</button>
+  </div>
+</header>
+<div id="progress-bar-wrap"><div id="progress-bar"></div></div>
+<div id="save-toast">💾 Draft saved</div>
+
+<main>
+
+  <!-- ── Welcome ── -->
+  <div class="card" id="screen-welcome">
+    <div class="welcome-icon">🔬</div>
+    <div class="welcome-title">Research Interview Questionnaire</div>
+    <div class="welcome-subtitle">
+      This short questionnaire captures key insights from your recent research presentation or poster —
+      including your study goals, findings, and what the work means for precision medicine and Helix's mission.
+      Responses will be used to develop a blog post or case study.
+    </div>
+
+    <!-- Resume banner (shown if draft exists) -->
+    <div id="resume-banner">
+      <div class="resume-banner-header">⏸️ <span>You have an unfinished interview</span></div>
+      <div class="resume-meta" id="resume-meta"></div>
+      <div class="resume-actions">
+        <button class="resume-btn resume-btn-primary" onclick="resumeDraft()">Resume where I left off →</button>
+        <button class="resume-btn resume-btn-secondary" onclick="discardDraft()">Discard & start fresh</button>
+      </div>
+    </div>
+
+    <div class="instruction-box">
+      <h3>A few things to know</h3>
+      <ul>
+        <li>There are <strong>6 default questions</strong> — you can customize, add, or remove them</li>
+        <li>Write freely — paragraphs, bullet points, numbered lists all work great</li>
+        <li><strong>Your progress is auto-saved</strong> — close the browser and pick up where you left off</li>
+        <li>You can go <strong>back and edit</strong> any response before submitting</li>
+        <li>No response is required — you can skip any question</li>
+      </ul>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="goTo('info')">Start New Interview →</button>
+    </div>
+  </div>
+
+  <!-- ── Researcher Info ── -->
+  <div class="card hidden" id="screen-info">
+    <div class="form-title">Before we begin</div>
+    <div class="form-subtitle">Tell us a little about yourself and your research so we can properly attribute your work.</div>
+    <div class="form-row">
+      <label>Your Name *</label>
+      <input type="text" id="info-name" placeholder="e.g. Dr. Jane Smith" oninput="autosaveDraft()" />
+    </div>
+    <div class="form-row">
+      <label>Study / Presentation Title *</label>
+      <input type="text" id="info-title" placeholder="e.g. GLP-1 Response Prediction Using Polygenic Risk Scores" oninput="autosaveDraft()" />
+    </div>
+    <div class="two-col">
+      <div class="form-row">
+        <label>Presentation Type</label>
+        <select id="info-type" onchange="autosaveDraft()">
+          <option value="">— Select —</option>
+          <option value="Poster">Poster</option>
+          <option value="Presentation">Presentation</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Where it was presented</label>
+        <input type="text" id="info-venue" placeholder="e.g. ASHG 2025, AHA 2025" oninput="autosaveDraft()" />
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goTo('welcome')">← Back</button>
+      <button class="btn btn-primary" onclick="beginInterview()">Continue →</button>
+    </div>
+  </div>
+
+  <!-- ── Customize Questions ── -->
+  <div class="card hidden" id="screen-customize">
+    <div class="customize-title">✏️ Customize Your Questions</div>
+    <div class="customize-subtitle">
+      Edit the question titles and follow-up prompts, reorder with arrows, add new questions, or remove any that aren't relevant.
+    </div>
+    <div id="customize-list"></div>
+    <button class="add-q-btn" onclick="addQuestion()">+ Add a Question</button>
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span class="reset-link" onclick="resetQuestions()">Reset to defaults</span>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goTo('info')">← Back</button>
+      <button class="btn btn-primary" onclick="startInterview()">Start Interview →</button>
+    </div>
+  </div>
+
+  <!-- ── Question ── -->
+  <div class="card hidden" id="screen-question">
+    <div class="q-meta">
+      <div class="q-badge" id="q-badge">Question 1 of 6</div>
+      <div class="q-dots" id="q-dots"></div>
+    </div>
+    <div class="q-title" id="q-title"></div>
+    <div class="q-prompt" id="q-prompt"></div>
+    <textarea class="response-area" id="q-textarea"
+      placeholder="Write your response here...&#10;&#10;Paragraphs, bullet points (- item), or numbered lists (1. item) all work."
+      oninput="updateWordCount(); autosaveDraft()"></textarea>
+    <div class="textarea-footer">
+      <span class="word-count" id="word-count">0 words</span>
+      <span class="format-hint">Your progress is auto-saved as you type</span>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="prevQuestion()">← Back</button>
+      <button class="btn btn-primary" onclick="nextQuestion()">Save & Continue →</button>
+      <button class="btn-skip" onclick="skipQuestion()">Skip →</button>
+    </div>
+  </div>
+
+  <!-- ── Summary ── -->
+  <div class="card hidden" id="screen-summary">
+    <div class="summary-title">Review Your Responses</div>
+    <div class="summary-subtitle">Click any answer to edit it before sending. When you're happy, hit Submit below.</div>
+    <div id="summary-list"></div>
+    <div class="btn-row">
+      <button class="btn btn-outline" onclick="goTo('question'); currentQ = 0; renderQuestion()">← Edit Responses</button>
+      <button class="btn btn-green" onclick="submitInterview()">Submit ✓</button>
+    </div>
+  </div>
+
+  <!-- ── Done ── -->
+  <div class="card hidden" id="screen-done">
+    <div class="done-icon">✅</div>
+    <div class="done-title">All done — thank you!</div>
+    <div class="done-subtitle">Your responses have been recorded. Please follow the steps below to share them with Jay.</div>
+
+    <div class="done-instructions">
+      <h3>Two quick steps to share your responses:</h3>
+      <div class="done-step">
+        <div class="done-step-num">1</div>
+        <div class="done-step-text">
+          <strong>Download your responses</strong> as a text file using the button below.
+        </div>
+      </div>
+      <div class="done-step">
+        <div class="done-step-num">2</div>
+        <div class="done-step-text">
+          <strong>Send the file to Jay</strong> via email or Slack:
+          <div class="done-contact">
+            <a class="contact-chip" href="mailto:jay.shah@helix.com?subject=Research Interview Responses">📧 jay.shah@helix.com</a>
+            <span class="contact-chip">💬 @Jay Shah on Slack</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="downloadTxt()">⬇ Download Responses</button>
+    </div>
+    <div class="btn-row" style="margin-top:12px;">
+      <button class="btn btn-outline" onclick="goTo('summary')">← Back to Review</button>
+      <button class="btn btn-secondary" onclick="startOver()">Start New Interview</button>
+    </div>
+  </div>
+
+  <!-- ── History ── -->
+  <div class="card hidden" id="screen-history">
+    <div class="history-title">📋 Response History</div>
+    <div class="history-subtitle">All completed interviews saved in this browser. Click to view or download any response.</div>
+    <div id="history-list"></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeHistory()">← Back</button>
+      <button class="btn btn-outline" onclick="downloadAllTxt()" id="download-all-btn">Download All</button>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  // ─────────────────────────────────────────────────────────────────────────
+  // CONFIG — set your email here to always receive responses
+  // ─────────────────────────────────────────────────────────────────────────
+  const CONFIG = {
+    adminEmail: 'jay.shah@helix.com',  // ← recipient email
+    adminPin:   '0831'                 // ← PIN to access question editor
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────
+  const DEFAULT_QUESTIONS = [
+    { title: "What was the goal of the study?",
+      prompt: "Think about: What gap in the existing literature were you looking to fill? Was this a follow-up of an existing study? Was there a specific clinical problem or patient population that sparked the work?" },
+    { title: "Quick overview of the disease and any genes or variants of interest that you were looking at?",
+      prompt: "Think about: Key challenges with this disease — or what makes it an especially interesting or important area to study from a genomics standpoint?" },
+    { title: "Key results and outcomes of the study",
+      prompt: "Think about: In a couple of sentences or bullet points, what are the two or three results you'd want someone to take away from this study? Were there any findings or surprising outcomes?" },
+    { title: "Any limitations and where does the research go from here?",
+      prompt: "Think about: What do you see as the key limitations of this research? And what's the logical next chapter for it — any related diseases or genes to study further?" },
+    { title: "What does this mean for researchers and/or patients and the broader field?",
+      prompt: "Think about: If these findings hold up and get applied in practice, what changes? Whether it's earlier diagnosis, better treatment matching, or new drug targets — what's the real-world impact you're hoping this work eventually has?" },
+    { title: "Any final thoughts?",
+      prompt: "Think about: Looking back on the research, is there anything you were able to do here that wouldn't have been possible with a smaller or less integrated data source?" }
+  ];
+
+  let questions = DEFAULT_QUESTIONS.map(q => ({ ...q }));
+  let answers   = [];
+  let currentQ  = 0;
+  let prevScreen = 'welcome';
+  let saveTimer  = null;
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Navigation
+  // ─────────────────────────────────────────────────────────────────────────
+  function goTo(screen) {
+    prevScreen = getCurrentScreen();
+    document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
+    document.getElementById(`screen-${screen}`).classList.remove('hidden');
+    updateProgress(screen);
+    const histBtn = document.getElementById('history-btn');
+    histBtn.style.display = (screen !== 'history') ? 'block' : 'none';
+  }
+
+  function getCurrentScreen() {
+    const screens = ['welcome','info','customize','question','summary','done','history'];
+    return screens.find(s => !document.getElementById(`screen-${s}`).classList.contains('hidden')) || 'welcome';
+  }
+
+  function updateProgress(screen) {
+    const map = { welcome:0, info:1, customize:2, question:4, summary:8, done:10, history:0 };
+    document.getElementById('progress-bar').style.width = ((map[screen]||0)/10*100) + '%';
+    const qLabel = screen === 'question' ? ` — Q${currentQ+1} of ${questions.length}` : '';
+    const labels = { welcome:'', info:'Step 1 — Info', customize:'Step 2 — Customize',
+      question:`Step 3 — Interview${qLabel}`, summary:'Step 4 — Review', done:'Complete', history:'' };
+    document.getElementById('header-step').textContent = labels[screen] || '';
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Auto-save draft to localStorage
+  // ─────────────────────────────────────────────────────────────────────────
+  function autosaveDraft() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      if (getCurrentScreen() === 'question') {
+        answers[currentQ] = document.getElementById('q-textarea').value.trim();
+      }
+      const draft = {
+        savedAt:     new Date().toISOString(),
+        currentQ,
+        screen:      getCurrentScreen(),
+        questions:   questions.map(q => ({ ...q })),
+        answers:     [...answers],
+        info: {
+          name:  document.getElementById('info-name')?.value.trim()  || '',
+          title: document.getElementById('info-title')?.value.trim() || '',
+          type:  document.getElementById('info-type')?.value        || '',
+          venue: document.getElementById('info-venue')?.value.trim() || '',
+        }
+      };
+      localStorage.setItem('helix_interview_draft', JSON.stringify(draft));
+      showToast('💾 Draft saved');
+    }, 800);
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('save-toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 1800);
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Resume draft
+  // ─────────────────────────────────────────────────────────────────────────
+  function checkForDraft() {
+    try {
+      const raw = localStorage.getItem('helix_interview_draft');
+      if (!raw) return;
+      const draft = JSON.parse(raw);
+      if (!draft?.info?.name) return;
+      const date = new Date(draft.savedAt).toLocaleDateString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+      document.getElementById('resume-meta').textContent =
+        `${draft.info.name}${draft.info.title ? ' — ' + draft.info.title : ''} · Last saved ${date} · Q${draft.currentQ+1} of ${draft.questions.length}`;
+      document.getElementById('resume-banner').style.display = 'block';
+    } catch(e) {}
+  }
+
+  function resumeDraft() {
+    try {
+      const draft = JSON.parse(localStorage.getItem('helix_interview_draft'));
+      questions = draft.questions.map(q => ({ ...q }));
+      answers   = [...draft.answers];
+      currentQ  = draft.currentQ || 0;
+      // Restore info fields
+      const f = draft.info;
+      document.getElementById('info-name').value  = f.name  || '';
+      document.getElementById('info-title').value = f.title || '';
+      document.getElementById('info-type').value  = f.type  || '';
+      document.getElementById('info-venue').value = f.venue || '';
+      // Go back to question screen
+      goTo('question');
+      renderQuestion();
+    } catch(e) { alert('Could not resume draft.'); }
+  }
+
+  function discardDraft() {
+    localStorage.removeItem('helix_interview_draft');
+    document.getElementById('resume-banner').style.display = 'none';
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Info → Interview (respondent flow — skips customize)
+  // ─────────────────────────────────────────────────────────────────────────
+  function beginInterview() {
+    if (!document.getElementById('info-name').value.trim())  { alert('Please enter your name.'); return; }
+    if (!document.getElementById('info-title').value.trim()) { alert('Please enter the study title.'); return; }
+    // Load admin-saved questions from localStorage if available
+    try {
+      const saved = localStorage.getItem('helix_admin_questions');
+      if (saved) questions = JSON.parse(saved);
+    } catch(e) {}
+    answers  = new Array(questions.length).fill('');
+    currentQ = 0;
+    autosaveDraft();
+    goTo('question');
+    renderQuestion();
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Admin — PIN-protected question editor
+  // ─────────────────────────────────────────────────────────────────────────
+  function openAdminCustomize() {
+    const pin = prompt('Enter admin PIN:');
+    if (pin === null) return;
+    if (pin !== CONFIG.adminPin) { alert('Incorrect PIN.'); return; }
+    // Load current saved questions for editing
+    try {
+      const saved = localStorage.getItem('helix_admin_questions');
+      if (saved) questions = JSON.parse(saved);
+      else questions = DEFAULT_QUESTIONS.map(q => ({ ...q }));
+    } catch(e) { questions = DEFAULT_QUESTIONS.map(q => ({ ...q })); }
+    renderCustomize();
+    goTo('customize');
+  }
+
+  // Alias kept so customize screen "Start Interview" button still works
+  function goToCustomize() { openAdminCustomize(); }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Customize
+  // ─────────────────────────────────────────────────────────────────────────
+  function renderCustomize() {
+    const list = document.getElementById('customize-list');
+    list.innerHTML = '';
+    questions.forEach((q, i) => {
+      const card = document.createElement('div');
+      card.className = 'q-edit-card';
+      card.id = `qedit-${i}`;
+      card.innerHTML = `
+        <div class="q-edit-header">
+          <div class="q-edit-num">${i+1}</div>
+          <div style="flex:1;font-size:13px;font-weight:700;color:#334155;">Question ${i+1}</div>
+          <div class="q-edit-actions">
+            <button class="q-edit-btn" title="Move up"   onclick="moveQuestion(${i},-1)" ${i===0?'disabled':''}>↑</button>
+            <button class="q-edit-btn" title="Move down" onclick="moveQuestion(${i}, 1)" ${i===questions.length-1?'disabled':''}>↓</button>
+            <button class="q-edit-btn danger" title="Delete" onclick="deleteQuestion(${i})">✕</button>
+          </div>
+        </div>
+        <div class="q-edit-field">
+          <label>Question Title</label>
+          <input type="text" id="qedit-title-${i}" value="${escAttr(q.title)}" placeholder="Enter question..." />
+        </div>
+        <div class="q-edit-field">
+          <label>Follow-up Prompt <span style="font-weight:400;color:#cbd5e1">(optional)</span></label>
+          <textarea id="qedit-prompt-${i}" placeholder="Add context to guide the respondent...">${escHtml(q.prompt)}</textarea>
+        </div>`;
+      list.appendChild(card);
+    });
+  }
+
+  function syncFromDOM() {
+    questions = questions.map((_,i) => ({
+      title:  document.getElementById(`qedit-title-${i}`)?.value.trim()  || '',
+      prompt: document.getElementById(`qedit-prompt-${i}`)?.value.trim() || ''
+    }));
+  }
+
+  function moveQuestion(i, dir) {
+    syncFromDOM();
+    const j = i + dir;
+    if (j < 0 || j >= questions.length) return;
+    [questions[i], questions[j]] = [questions[j], questions[i]];
+    renderCustomize();
+  }
+
+  function deleteQuestion(i) {
+    if (questions.length <= 1) { alert('You need at least one question.'); return; }
+    syncFromDOM();
+    questions.splice(i, 1);
+    renderCustomize();
+  }
+
+  function addQuestion() {
+    syncFromDOM();
+    questions.push({ title: '', prompt: '' });
+    renderCustomize();
+    setTimeout(() => {
+      const last = document.getElementById(`qedit-${questions.length-1}`);
+      if (last) { last.scrollIntoView({ behavior:'smooth', block:'center' }); last.querySelector('input').focus(); }
+    }, 100);
+  }
+
+  function resetQuestions() {
+    if (!confirm('Reset to default questions? Your edits will be lost.')) return;
+    questions = DEFAULT_QUESTIONS.map(q => ({ ...q }));
+    renderCustomize();
+  }
+
+  function startInterview() {
+    syncFromDOM();
+    questions = questions.filter(q => q.title.trim() !== '');
+    if (questions.length === 0) { alert('Please add at least one question.'); renderCustomize(); return; }
+    // Persist admin questions so all future respondents see them
+    localStorage.setItem('helix_admin_questions', JSON.stringify(questions));
+    answers  = new Array(questions.length).fill('');
+    currentQ = 0;
+    autosaveDraft();
+    goTo('question');
+    renderQuestion();
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Question
+  // ─────────────────────────────────────────────────────────────────────────
+  function renderQuestion() {
+    const q = questions[currentQ];
+    document.getElementById('q-badge').textContent  = `Question ${currentQ+1} of ${questions.length}`;
+    document.getElementById('q-title').textContent  = q.title;
+    document.getElementById('q-prompt').textContent = q.prompt;
+    document.getElementById('q-textarea').value     = answers[currentQ];
+    updateWordCount();
+    updateDots();
+    updateProgress('question');
+    document.getElementById('q-textarea').focus();
+  }
+
+  function updateDots() {
+    const c = document.getElementById('q-dots');
+    c.innerHTML = '';
+    questions.forEach((_,i) => {
+      const d = document.createElement('div');
+      d.className = 'q-dot' + (i<currentQ?' done':i===currentQ?' active':'');
+      c.appendChild(d);
+    });
+  }
+
+  function updateWordCount() {
+    const txt = document.getElementById('q-textarea').value.trim();
+    const w   = txt ? txt.split(/\s+/).length : 0;
+    document.getElementById('word-count').textContent = `${w} word${w!==1?'s':''}`;
+  }
+
+  function saveCurrentAnswer() { answers[currentQ] = document.getElementById('q-textarea').value.trim(); }
+
+  function nextQuestion() {
+    saveCurrentAnswer(); autosaveDraft();
+    if (currentQ < questions.length-1) { currentQ++; renderQuestion(); }
+    else { buildSummary(); goTo('summary'); }
+  }
+
+  function prevQuestion() {
+    saveCurrentAnswer();
+    if (currentQ > 0) { currentQ--; renderQuestion(); }
+    else { goTo('info'); }
+  }
+
+  function skipQuestion() {
+    answers[currentQ] = '';
+    if (currentQ < questions.length-1) { currentQ++; renderQuestion(); }
+    else { buildSummary(); goTo('summary'); }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Summary
+  // ─────────────────────────────────────────────────────────────────────────
+  function buildSummary() {
+    const list = document.getElementById('summary-list');
+    list.innerHTML = '';
+    questions.forEach((q,i) => {
+      const item = document.createElement('div');
+      item.className = 'summary-item';
+      item.innerHTML = `
+        <div class="summary-q-label">Question ${i+1}</div>
+        <div class="summary-q-title">${escHtml(q.title)}</div>
+        ${answers[i]
+          ? `<div class="summary-q-answer">${escHtml(answers[i])}</div>`
+          : `<div class="no-answer">No response provided — click to add one</div>`}
+        <div class="edit-hint">✏️ Click to edit</div>`;
+      item.onclick = () => { currentQ = i; goTo('question'); renderQuestion(); };
+      list.appendChild(item);
+    });
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Submit — saves to history, clears draft
+  // ─────────────────────────────────────────────────────────────────────────
+  function submitInterview() {
+    const record = {
+      id:          Date.now(),
+      submittedAt: new Date().toISOString(),
+      info: {
+        name:  document.getElementById('info-name').value.trim(),
+        title: document.getElementById('info-title').value.trim(),
+        type:  document.getElementById('info-type').value,
+        venue: document.getElementById('info-venue').value.trim(),
+      },
+      questions: questions.map(q => ({ ...q })),
+      answers:   [...answers]
+    };
+
+    // Save to history
+    const history = getHistory();
+    history.unshift(record);
+    localStorage.setItem('helix_interview_history', JSON.stringify(history));
+
+    // Clear draft
+    localStorage.removeItem('helix_interview_draft');
+
+    goTo('done');
+    buildDone();
+    showToast('✅ Saved to history');
+  }
+
+  function getHistory() {
+    try { return JSON.parse(localStorage.getItem('helix_interview_history')) || []; }
+    catch(e) { return []; }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Done / Export
+  // ─────────────────────────────────────────────────────────────────────────
+  function buildDone() {
+    const name = document.getElementById('info-name').value.trim();
+    document.getElementById('done-subtitle').textContent =
+      `Responses from ${name} have been saved and are ready to send to ${CONFIG.adminEmail}.`;
+  }
+
+  function buildText(info, qs, ans) {
+    info = info || {
+      name:  document.getElementById('info-name').value.trim(),
+      title: document.getElementById('info-title').value.trim(),
+      type:  document.getElementById('info-type').value,
+      venue: document.getElementById('info-venue').value.trim(),
+    };
+    qs  = qs  || questions;
+    ans = ans || answers;
+    const date = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+    let txt = `HELIX RESEARCH INTERVIEW\n${'='.repeat(60)}\n\n`;
+    txt += `Researcher:   ${info.name}\n`;
+    txt += `Study Title:  ${info.title}\n`;
+    if (info.type)  txt += `Type:         ${info.type}\n`;
+    if (info.venue) txt += `Venue:        ${info.venue}\n`;
+    txt += `Date:         ${date}\n\n${'='.repeat(60)}\n\n`;
+    qs.forEach((q,i) => {
+      txt += `Q${i+1}: ${q.title}\n${'-'.repeat(50)}\n`;
+      txt += ans[i] ? `${ans[i]}\n` : '(No response provided)\n';
+      txt += '\n\n';
+    });
+    return txt;
+  }
+
+  function sendEmail() {
+    const subject = `Research Interview: ${document.getElementById('info-name').value.trim()} — ${document.getElementById('info-title').value.trim()}`;
+    window.location.href = `mailto:${encodeURIComponent(CONFIG.adminEmail)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(buildText())}`;
+  }
+
+  function downloadTxt(info, qs, ans, filename) {
+    const name = (info?.name || document.getElementById('info-name').value.trim()).replace(/\s+/g,'_') || 'researcher';
+    const blob = new Blob([buildText(info,qs,ans)], { type:'text/plain' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename || `Helix_Interview_${name}.txt`;
+    a.click();
+  }
+
+  function copyAll() {
+    navigator.clipboard.writeText(buildText()).then(() => {
+      const btn = document.getElementById('copy-btn');
+      btn.textContent = 'Copied! ✓';
+      setTimeout(() => btn.textContent = 'Copy All', 2000);
+    });
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // History screen
+  // ─────────────────────────────────────────────────────────────────────────
+  function openHistory() {
+    renderHistory();
+    goTo('history');
+  }
+
+  function closeHistory() {
+    goTo(prevScreen || 'welcome');
+  }
+
+  function renderHistory() {
+    const history = getHistory();
+    const list    = document.getElementById('history-list');
+    const dlBtn   = document.getElementById('download-all-btn');
+    list.innerHTML = '';
+    dlBtn.style.display = history.length > 1 ? 'flex' : 'none';
+
+    if (history.length === 0) {
+      list.innerHTML = '<div class="history-empty">No completed interviews yet.<br>Submitted interviews will appear here.</div>';
+      return;
+    }
+
+    history.forEach(record => {
+      const date = new Date(record.submittedAt).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+      const answered = record.answers.filter(a => a).length;
+      const card = document.createElement('div');
+      card.className = 'history-card';
+      card.innerHTML = `
+        <div class="history-card-header">
+          <div class="history-card-title">${escHtml(record.info.title || 'Untitled Study')}</div>
+          <div class="history-card-date">${date}</div>
+        </div>
+        <div class="history-card-meta">
+          ${escHtml(record.info.name)}${record.info.institution ? ' · ' + escHtml(record.info.institution) : ''}
+          ${record.info.venue ? ' · ' + escHtml(record.info.venue) : ''}
+          · ${answered} of ${record.questions.length} questions answered
+        </div>
+        <div class="history-card-actions">
+          <button class="history-action-btn blue"  onclick="emailRecord(${record.id})">📧 Email</button>
+          <button class="history-action-btn gray"  onclick="downloadRecord(${record.id})">📄 Download</button>
+          <button class="history-action-btn red"   onclick="deleteRecord(${record.id})">Delete</button>
+        </div>`;
+      list.appendChild(card);
+    });
+  }
+
+  function getRecord(id) { return getHistory().find(r => r.id === id); }
+
+  function emailRecord(id) {
+    const r = getRecord(id);
+    if (!r) return;
+    const subject = `Research Interview: ${r.info.name} — ${r.info.title}`;
+    window.location.href = `mailto:${encodeURIComponent(CONFIG.adminEmail)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(buildText(r.info, r.questions, r.answers))}`;
+  }
+
+  function downloadRecord(id) {
+    const r = getRecord(id);
+    if (!r) return;
+    const name = r.info.name.replace(/\s+/g,'_');
+    downloadTxt(r.info, r.questions, r.answers, `Helix_Interview_${name}.txt`);
+  }
+
+  function deleteRecord(id) {
+    if (!confirm('Delete this interview response? This cannot be undone.')) return;
+    const history = getHistory().filter(r => r.id !== id);
+    localStorage.setItem('helix_interview_history', JSON.stringify(history));
+    renderHistory();
+  }
+
+  function downloadAllTxt() {
+    const history = getHistory();
+    let combined = `HELIX RESEARCH INTERVIEWS — ALL RESPONSES\n${'='.repeat(60)}\nExported: ${new Date().toLocaleDateString()}\n\n\n`;
+    history.forEach((r,i) => {
+      combined += `INTERVIEW ${i+1} OF ${history.length}\n` + buildText(r.info, r.questions, r.answers) + '\n\n';
+    });
+    const blob = new Blob([combined], { type:'text/plain' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `Helix_All_Interviews.txt`;
+    a.click();
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Start over
+  // ─────────────────────────────────────────────────────────────────────────
+  function startOver() {
+    if (!confirm('Start a new interview? Current session will be cleared.')) return;
+    questions = DEFAULT_QUESTIONS.map(q => ({ ...q }));
+    answers   = [];
+    currentQ  = 0;
+    ['info-name','info-title','info-venue'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('info-type').value = '';
+    localStorage.removeItem('helix_interview_draft');
+    goTo('welcome');
+    checkForDraft();
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Helpers
+  // ─────────────────────────────────────────────────────────────────────────
+  function escHtml(t) { return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
+  function escAttr(t) { return String(t).replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Init
+  // ─────────────────────────────────────────────────────────────────────────
+  checkForDraft();
+  const histCount = getHistory().length;
+  if (histCount > 0) {
+    const btn = document.getElementById('history-btn');
+    btn.style.display = 'block';
+    btn.textContent = `📋 History (${histCount})`;
+  }
+</script>
+</body>
+</html>
